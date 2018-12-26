@@ -283,7 +283,7 @@
     var selected_country=""
     var selected_feature=""
     var feature_country_year_dict={}
-    var countries=[]
+    // var country=[]
     d3.csv("countries_1990_2015.csv",function(data) {
         option2 = {
             // selected:(function (){//让17个按钮处于未激活状态
@@ -468,12 +468,13 @@
             if(selected_feature&&selected_country)//如果两个触发都传入了值
                 change_chart2(selected_feature,selected_country)
         })
-        //点击地图chart//并加入多个国家
+        //点击地图chart
         chart.on('click',function (params) {
+
             selected_country=params.name
-            countries.push(selected_country)
-             if(selected_feature&&selected_countr)
-                change_chart2(selected_feature,countries)
+            // country.push(selected_country)
+             if(selected_feature&&selected_country)
+                change_chart2(selected_feature,selected_country)
         })
 
         option= {
