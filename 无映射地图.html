@@ -14,8 +14,10 @@
 
 <body>
 
- <div id="main" style="width:50%;height: 450px;"></div>
+ <div id="main" style="width:40%;height: 450px;"></div>
+ <div id="rank" style="width:10%;height: 450px;"><p id="show_rank"style="color: red">shabi</p></div>
  <div id="trend" style="width:50%;height: 470px;"></div>
+
  <script>
 
     var chart = echarts.init(document.getElementById('main'));//地图
@@ -282,8 +284,10 @@
     var trend_data_list=[]
     var selected_country=""
     var selected_feature=""
+    var selected_year=""
     var feature_country_year_dict={}
     var countries=[]
+    var year_countries_features=[]
     d3.csv("countries_1990_2015.csv",function(data) {
         option2 = {
             // selected:(function (){//让17个按钮处于未激活状态
@@ -454,14 +458,40 @@
         };
             chart2.setOption(option2)
         }
+        // function (params) {
+        //                 var money=params.data.value[2]/1000000000.0;
+        //                 money=money.toFixed(3);
+        //                 var year=selectYear+1990;
+        //                 var output1="GDP增长率" + '&nbsp:&nbsp' + params.data.value[3].toFixed(3)+"%"+" &nbsp&nbsp&nbsp排名 "+" : "+getSortedNum(sortedAllYear(selectValue("NY.GDP.MKTP.KD.ZG"))[selectYear],params.name);
+        //                 var output2="GDP"+" : "+money+"&nbspB$"+"&nbsp&nbsp&nbsp&nbsp"+"排名"+" : "+getSortedNum(sortedAllYear(selectValue("NY.GDP.MKTP.CD"))[selectYear],params.name);
+        //                 var output3="人均GDP"+" : "+ params.data.value[10].toFixed(3)+"&nbsp$"+"&nbsp&nbsp&nbsp&nbsp"+"排名"+" : "+getSortedNum(sortedAllYear(selectValue("NY.GDP.PCAP.CD"))[selectYear],params.name);
+        //                 return params.name +"----"+year+"年"+'<br/>'+output2+ '<br/>' + output1+'<br/>'+output3;
+        //             },
+        function show_rank(country,year){
+            // console.log(country)国家
+            // console.log(year)第几年，不是1990，而是0
+            // console.log(year_countries_features)
+            // console.log(year_countries_features[year])
 
+            var feature_value=year_countries_features[year][country]
+            var money=feature_value[0]/1000000000.0;//获取GDP
+            var year=selectYear+1990;//具体到哪一年
+            //GDP总量输出
+            var output1="GDP"+" : "+money+"&nbspB$"+"&nbsp&nbsp&nbsp&nbsp"+"排名"+" : "+getSortedNum(sortedAllYear(selectValue("NY.GDP.MKTP.CD"))[selected_year],country);
+            //GDP增长率输出
+            var output2="GDP增长率" + '&nbsp:&nbsp' + feature_value[1].toFixed(3)+"%"+" &nbsp&nbsp&nbsp排名 "+" : "+getSortedNum(sortedAllYear(selectValue("NY.GDP.MKTP.KD.ZG"))[selected_year],country);
+            //人均GDP输出
+            var output3="人均GDP"+" : "+ feature_value[8].toFixed(3)+"&nbsp$"+"&nbsp&nbsp&nbsp&nbsp"+"排名"+" : "+getSortedNum(sortedAllYear(selectValue("NY.GDP.PCAP.CD"))[selected_year],country);
+            var out_to_rankshow=country +"----"+year+"年"+'<br/>'+output2+ '<br/>' + output1+'<br/>'+output3;
+            document.getElementById("show_rank").innerHTML=out_to_rankshow
+        }
         // var ecConfig = require('echarts/config');
 
         // chart2.on(ecConfig.EVENT.LEGEND_SELECTED, function (param) {
         //     console.log(param)
         // });
         // function
-        //点击chart2趋势图的feature，然后触发
+        //点击chart2趋势图的feature按钮，然后触发
         chart2.on('legendselectchanged', function (params) {
             // console.log(params)
             selected_feature=params.name
@@ -470,9 +500,15 @@
         })
         //点击地图chart//并加入多个国家
         chart.on('click',function (params) {
-            selected_country=params.name
-            countries.push(selected_country)
-             if(selected_feature&&selected_countr)
+            // if(parseInt(params.name)>=0)
+            //     selected_year=params.name
+            // else
+            var t_country=params.name//获得鼠标点击的国家
+            selected_country=t_country
+            if(selected_country&&selected_year)
+                show_rank(selected_country,selected_year)
+            countries.push(t_country)
+            if(selected_feature&&selected_country)//或者是countries
                 change_chart2(selected_feature,countries)
         })
 
@@ -549,6 +585,19 @@
                         fontSize:30,
                     },
                 },
+                // tooltip: {
+                //     show:true,
+                //     trigger: 'item',
+                //     formatter: function (params) {
+                //         var money=params.data.value[2]/1000000000.0;
+                //         money=money.toFixed(3);
+                //         var year=selectYear+1990;
+                //         var output1="GDP增长率" + '&nbsp:&nbsp' + params.data.value[3].toFixed(3)+"%"+" &nbsp&nbsp&nbsp排名 "+" : "+getSortedNum(sortedAllYear(selectValue("NY.GDP.MKTP.KD.ZG"))[selectYear],params.name);
+                //         var output2="GDP"+" : "+money+"&nbspB$"+"&nbsp&nbsp&nbsp&nbsp"+"排名"+" : "+getSortedNum(sortedAllYear(selectValue("NY.GDP.MKTP.CD"))[selectYear],params.name);
+                //         var output3="人均GDP"+" : "+ params.data.value[10].toFixed(3)+"&nbsp$"+"&nbsp&nbsp&nbsp&nbsp"+"排名"+" : "+getSortedNum(sortedAllYear(selectValue("NY.GDP.PCAP.CD"))[selectYear],params.name);
+                //         return params.name +"----"+year+"年"+'<br/>'+output2+ '<br/>' + output1+'<br/>'+output3;
+                //     },
+                // },
                 geo:{
                     zoom:1,//播放比例
                     type: 'map',
@@ -559,6 +608,7 @@
                     // bottom: '10%',
                     //silent:true,
                     itemStyle: {
+
                         normal: {
                             areaColor: '#eeeeef',
                             borderColor: '#000'
@@ -568,25 +618,40 @@
                         }
                     },
                     label: {
+                        show:true,
+                        lineHeight: 56,
+                        align:'center',
+                        fontSize:20,
+                        formatter:"shabi",
+                        position: [10, 10],
+
+                        backgroundColor:'red',
+                        // normal: {显示地图上的国家名
+                        //                 show: true
+                        //             },
                         emphasis: {
                             color: '#e20000',
                             show: true,
                         }
                     },
-                    selectedMode:'multiple',
+                    selectedMode:'multiple',//是否支持地图多选模式，multiple代表可以选择多个地图
                 },
-                toolbox: {
-                    show: true,
-                    left: 'left',
-                    iconStyle: {
-                        normal: {
-                            borderColor: '#ddd'
-                        }
-                    },
-                    feature: {
-                    },
-                    z: 202
-                },
+                // tooltip: {
+                //     trigger: 'item',
+                //     formatter:"shabi"
+                // },
+                // toolbox: {//工具栏小图标
+                //     show: true,
+                //     left: 'left',
+                //     iconStyle: {
+                //         normal: {
+                //             borderColor: '#ddd'
+                //         }
+                //     },
+                //     feature: {
+                //     },
+                //     z: 202
+                // },
                 brush: {
                     geoIndex: 0,
                     brushLink: 'all',
@@ -601,26 +666,32 @@
                     z: 10
                 },
 
-                tooltip: {
-                    name:'123',
-                    trigger: 'item',
-                    formatter: function (params) {
-                        var money=params.data.value[2]/1000000000.0;
-                        money=money.toFixed(3);
-                        var year=selectYear+1990;
-                        var output1="GDP增长率" + '&nbsp:&nbsp' + params.data.value[3].toFixed(3)+"%"+" &nbsp&nbsp&nbsp排名 "+" : "+getSortedNum(sortedAllYear(selectValue("NY.GDP.MKTP.KD.ZG"))[selectYear],params.name);
-                        var output2="GDP"+" : "+money+"&nbspB$"+"&nbsp&nbsp&nbsp&nbsp"+"排名"+" : "+getSortedNum(sortedAllYear(selectValue("NY.GDP.MKTP.CD"))[selectYear],params.name);
-                        var output3="人均GDP"+" : "+ params.data.value[10].toFixed(3)+"&nbsp$"+"&nbsp&nbsp&nbsp&nbsp"+"排名"+" : "+getSortedNum(sortedAllYear(selectValue("NY.GDP.PCAP.CD"))[selectYear],params.name);
-                        return params.name +"----"+year+"年"+'<br/>'+output2+ '<br/>' + output1+'<br/>'+output3;
-                    }
-                },
+                // tooltip: {
+                //     show:true,
+                //     trigger: 'item',
+                //     // formatter: function (params) {
+                //     //     var money=params.data.value[2]/1000000000.0;
+                //     //     money=money.toFixed(3);
+                //     //     var year=selectYear+1990;
+                //     //     var output1="GDP增长率" + '&nbsp:&nbsp' + params.data.value[3].toFixed(3)+"%"+" &nbsp&nbsp&nbsp排名 "+" : "+getSortedNum(sortedAllYear(selectValue("NY.GDP.MKTP.KD.ZG"))[selectYear],params.name);
+                //     //     var output2="GDP"+" : "+money+"&nbspB$"+"&nbsp&nbsp&nbsp&nbsp"+"排名"+" : "+getSortedNum(sortedAllYear(selectValue("NY.GDP.MKTP.CD"))[selectYear],params.name);
+                //     //     var output3="人均GDP"+" : "+ params.data.value[10].toFixed(3)+"&nbsp$"+"&nbsp&nbsp&nbsp&nbsp"+"排名"+" : "+getSortedNum(sortedAllYear(selectValue("NY.GDP.PCAP.CD"))[selectYear],params.name);
+                //     //     return params.name +"----"+year+"年"+'<br/>'+output2+ '<br/>' + output1+'<br/>'+output3;
+                //     // }
+                //     // formatter:"shabishabishabishabishabishabi"
+                // },
             },
             options:[]
         };
         //点击chart的时间轴
         chart.on('timeLineChanged', function (params) {
+
             selectYear = params.currentIndex;
+            selected_year=params.currentIndex;
+            if(selected_country&&selected_year)
+                show_rank(selected_country,selected_year)
         });
+
         var selectYear=0;
 
         function makeParallelAxis(paralllelName) {
@@ -761,7 +832,7 @@
             var feature_country_year_dict={};
             var dict_temp={"GDP":{}}
             var n=0;//17个特征里取到哪一个特征了
-            console.log(data.length)
+            // console.log(data.length)
             //下面是获取每一个特征的数据，遍历完后，上面的feature_country_year_dict数组里会存满17个特征的所有国家所有年份数据
             for (var i=0;i<data.length;i++) {//遍历所有数据行
                 values = Object.values(data[i])//把每一行的value组成数组
@@ -817,7 +888,7 @@
                 }
 
             }
-
+            year_countries_features.push(yearDataDict)//每一年的所有国家属性的字典，push到全局变量数组里
             var rawData=dictToArray(yearDataDict);
             superdata.push(rawData)
 
@@ -828,6 +899,7 @@
                 },
 
                 series:[
+                    //加了一个散点图
                     // {
                     //     name:  "Test",
                     //     type: 'scatter',
@@ -891,7 +963,7 @@
                  }
              }
 */
-       console.log(makeMapData(rawData))
+       // console.log(makeMapData(rawData))
         setTimeout(function() {
             chart.setOption(option);
             window.onresize = function() {
@@ -991,49 +1063,50 @@
             }
             //document.getElementById("secondCharts").style.display="none";
             var rank=getSortedNum(sortedAllYear(selectValue("SP.POP.TOTL"))[selectYear],selectData[0]);
-            option= {
-                tooltip: {
-                    trigger: 'item',
-                    formatter: "{a} <br/>{b} : {c} ({d}%)"
-                },
-                title: {
-                    left: 'center',
-                    top:20,
-                    text: selectData[0]+"总人口",
-                    textStyle: {
-                        color: '#eee'
-                    },
-                },
-                legend: {
-                    x: 'left',
-                    data: ['女', '男'],
-                    show: false,
-                },
-                calculable: true,
-                series: [
-                    {
-                        name: "总人口 ：" + parseInt(selectData[6]/10000)+"（万人）排名："+rank,
+            // option= {
+            //     tooltip: {
+            //         trigger: 'item',
+            //         formatter: "{a} <br/>{b} : {c} ({d}%)"
+            //     },
+            //     title: {
+            //         left: 'center',
+            //         top:20,
+            //         text: selectData[0]+"总人口",
+            //         textStyle: {
+            //             color: '#eee'
+            //         },
+            //     },
+            //     legend: {
+            //         x: 'left',
+            //         data: ['女', '男'],
+            //         show: false,
+            //     },
+            //     calculable: true,
+            //     series: [
+            //         {
+            //             name: "总人口 ：" + parseInt(selectData[6]/10000)+"（万人）排名："+rank,
+            //             radius: ['25%', '50%'],
+            //             itemStyle: {
+            //                 normal: {
+            //                     label: {
+            //                         show: false
+            //                     },
+            //                     labelLine: {
+            //                         show: false
+            //                     }
+            //                 },
+            //             },
+            //             data: [
+            //                 {value: parseInt(selectData[6] * (selectData[5] / 100)/10000), name: '女'},
+            //                 {value: parseInt(selectData[6] * (1 - selectData[5] / 100)/10000), name: '男'},
+            //             ]
+            //         }
+            //     ]
+            // }
 
-                        radius: ['25%', '50%'],
-                        itemStyle: {
-                            normal: {
-                                label: {
-                                    show: false
-                                },
-                                labelLine: {
-                                    show: false
-                                }
-                            },
-                        },
-                        data: [
-                            {value: parseInt(selectData[6] * (selectData[5] / 100)/10000), name: '女'},
-                            {value: parseInt(selectData[6] * (1 - selectData[5] / 100)/10000), name: '男'},
-                        ]
-                    }
-                ]
-            }
             secondCharts.setOption(option)
-        });
+        });//以上代码都还在时间轴的触发事件里
+
         /*     chart.on('click', function (params) {
                   var selectName = params.name;
                   console.log(selectYear)
@@ -1283,7 +1356,7 @@
                 tempDict["name"]=array[i][0];
                 radarData[i]=tempDict;
             }
-            console.log(radarData);
+            // console.log(radarData);
             return radarData;
         }
 
